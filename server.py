@@ -7,7 +7,7 @@ import time
 import threading
 
 app = Flask(__name__)
-app.secret_key = "anicca-demo-key"  # For session handling
+app.secret_key = "aura-demo-key"  # For session handling
 
 # -------------------------------------------------------
 # Caching / rate limiting: refresh at most once per hour
