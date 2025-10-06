@@ -1,0 +1,84 @@
+<!-- Conflict Table ONLY -->
+<table style="width:100%; font-family:'Segoe UI',sans-serif; font-size:14px; border-collapse:collapse;">
+  <thead>
+    <tr style="background:#1f2937; color:#fff;">
+      <th style="padding:8px; text-align:center;">Flight A</th>
+      <th style="padding:8px; text-align:center;">Flight B</th>
+      <th style="padding:8px; text-align:center;">Category</th>
+      <th style="padding:8px; text-align:center;">Caution Level</th>
+      <th style="padding:8px; text-align:center;">Distance (in mts)</th>
+    </tr>
+  </thead>
+  <tbody id="conflict-table-body">
+    <!-- Dynamic rows go here -->
+  </tbody>
+</table>
+
+<script>
+function renderConflictTable(planes) {
+  const tableBody = document.getElementById("conflict-table-body");
+  tableBody.innerHTML = "";
+
+  const addedPairs = new Set();
+  const allConflicts = [];
+
+  planes.forEach(p => {
+    const flightA = p.Callsign || "Unknown";
+    (p.Conflicts || []).forEach(conflict => {
+      const flightB = conflict.Callsign || "Unknown";
+      const key = [flightA, flightB].sort().join("-");
+      if (addedPairs.has(key)) return;
+      addedPairs.add(key);
+
+      allConflicts.push({
+        flightA: flightA,
+        flightB: flightB,
+        category: conflict.Category,
+        alert: conflict.Alert,
+        distance: conflict.Distance
+      });
+    });
+  });
+
+  const priorityOrder = { "ALARM": 1, "ALERT": 2, "WARNING": 3 };
+  allConflicts.sort((a, b) => (priorityOrder[a.alert] || 99) - (priorityOrder[b.alert] || 99));
+
+  let alarmCount = 0, alertCount = 0, warningCount = 0;
+  allConflicts.forEach(c => {
+    if (c.alert === "ALARM")   alarmCount++;
+    if (c.alert === "ALERT")   alertCount++;
+    if (c.alert === "WARNING") warningCount++;
+  });
+
+  // Update stat cards
+  const alarmEl = document.getElementById("alarm-count");
+  const alertEl = document.getElementById("alert-count");
+  const warningEl = document.getElementById("warning-count");
+  if (alarmEl) alarmEl.innerText = alarmCount;
+  if (alertEl) alertEl.innerText = alertCount;
+  if (warningEl) warningEl.innerText = warningCount;
+
+  // Render table rows
+  allConflicts.forEach(conflict => {
+    const row = document.createElement("tr");
+
+    let bgColor = "";
+    switch (conflict.alert) {
+      case "ALARM":   bgColor = "background-color:#f8d7da;"; break;
+      case "ALERT":   bgColor = "background-color:#ffe5b4;"; break;
+      case "WARNING": bgColor = "background-color:#fffacc;"; break;
+    }
+
+    row.setAttribute("style", bgColor);
+    row.innerHTML = `
+      <td style="padding:8px; text-align:center;">${conflict.flightA}</td>
+      <td style="padding:8px; text-align:center;">${conflict.flightB}</td>
+      <td style="padding:8px; text-align:center;">${conflict.category}</td>
+      <td style="padding:8px; text-align:center;">${conflict.alert}</td>
+      <td style="padding:8px; text-align:center;">${conflict.distance}</td>
+    `;
+
+    tableBody.appendChild(row);
+  });
+}
+</script>
